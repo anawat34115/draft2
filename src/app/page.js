@@ -130,41 +130,120 @@ export default function Home() {
       </div>
 
       {/* Search Bar (Interactive) */}
-      <div className="bg-primary-blue py-8 border-t-4 border-primary-gold relative z-20">
+{/* Search Bar Section */}
+      <div className="relative z-20 -mt-10"> {/* ปรับ margin-top เพื่อดึงขึ้นไปหา Banner */}
+        
+        {/* 1. Tabs (อยู่เหนือกล่องค้นหา) */}
         <div className="container mx-auto px-4 md:px-8">
-          <div className="flex space-x-1 mb-4">
+          <div className="flex">
             <button 
                 onClick={() => setSearchTab('sell')}
-                className={`px-6 py-2 text-sm font-medium transition ${searchTab === 'sell' ? 'bg-primary-gold text-white' : 'bg-white/10 text-white hover:bg-white hover:text-primary-blue'}`}
-            >ขาย</button>
+                className={`min-w-[80px] px-6 py-3 text-sm font-bold transition-colors ${searchTab === 'sell' ? 'bg-primary-blue text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+            >
+                ขาย
+            </button>
             <button 
                 onClick={() => setSearchTab('rent')}
-                className={`px-6 py-2 text-sm font-medium transition ${searchTab === 'rent' ? 'bg-primary-gold text-white' : 'bg-white/10 text-white hover:bg-white hover:text-primary-blue'}`}
-            >เช่า</button>
+                className={`min-w-[80px] px-6 py-3 text-sm font-bold transition-colors ${searchTab === 'rent' ? 'bg-primary-blue text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+            >
+                เช่า
+            </button>
           </div>
-          <div className="text-primary-gold text-sm mb-2 font-semibold">ค้นหาอสังหาริมทรัพย์</div>
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-10 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <input 
-                type="text" placeholder="ประเภทอสังหาริมทรัพย์" 
-                className="w-full p-3 text-sm rounded bg-white border border-transparent focus:border-primary-gold focus:ring-0 outline-none text-gray-700"
-                onChange={(e) => setSearchInputs({...searchInputs, type: e.target.value})}
-              />
-              <input 
-                type="text" placeholder="ทำเล/โซน" 
-                className="w-full p-3 text-sm rounded bg-white border border-transparent focus:border-primary-gold focus:ring-0 outline-none text-gray-700"
-                onChange={(e) => setSearchInputs({...searchInputs, location: e.target.value})}
-              />
-              <input 
-                type="text" placeholder="ช่วงราคา" 
-                className="w-full p-3 text-sm rounded bg-white border border-transparent focus:border-primary-gold focus:ring-0 outline-none text-gray-700"
-                onChange={(e) => setSearchInputs({...searchInputs, price: e.target.value})}
-              />
+        </div>
+
+        {/* 2. Main Search Box (พื้นหลังสีน้ำเงินเข้ม) */}
+        <div className="bg-primary-blue py-8 shadow-xl">
+          <div className="container mx-auto px-4 md:px-8">
+            
+            {/* Row 1: Keyword Input + Filter Buttons */}
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+                {/* ช่องกรอกคำค้นหา */}
+                <div className="flex-grow">
+                    <label className="text-white text-sm font-bold mb-2 block">คำค้นหา</label>
+                    <input 
+                        type="text" 
+                        placeholder="ชื่อโครงการ หรือ ทำเลที่ตั้ง" 
+                        className="w-full h-12 px-4 text-sm rounded-sm bg-white border-none focus:ring-2 focus:ring-primary-gold outline-none text-gray-700"
+                        onChange={(e) => setSearchInputs({...searchInputs, location: e.target.value})}
+                    />
+                </div>
+                
+                {/* ปุ่มตัวกรอง & ล้างข้อมูล (ชิดขวาบน PC) */}
+                <div className="flex items-end gap-2 shrink-0">
+                    <button className="h-12 px-4 bg-[#333] hover:bg-black text-white text-sm rounded-sm transition flex items-center">
+                        ตัวกรอง
+                    </button>
+                    <button 
+                        onClick={() => setSearchInputs({ type: '', location: '', price: '' })}
+                        className="h-12 px-4 bg-gray-300 hover:bg-white text-gray-700 text-sm rounded-sm transition flex items-center"
+                    >
+                        ล้างข้อมูล
+                    </button>
+                </div>
             </div>
-            <div className="md:col-span-2 flex space-x-2">
-              <button onClick={handleSearch} className="w-full bg-primary-gold hover:bg-white hover:text-primary-gold text-white font-medium py-3 rounded transition shadow-lg flex justify-center items-center cursor-pointer">
-                <i className="fas fa-search mr-2"></i> ค้นหา
-              </button>
+
+            {/* Row 2: Dropdowns + Search Button */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {/* Dropdown 1 */}
+                <div>
+                    <label className="text-white text-sm font-bold mb-2 block">ประเภทอสังหาริมทรัพย์</label>
+                    <div className="relative">
+                        <select 
+                            className="w-full h-12 px-4 text-sm rounded-sm bg-white border-none focus:ring-2 focus:ring-primary-gold outline-none text-gray-700 appearance-none cursor-pointer"
+                            onChange={(e) => setSearchInputs({...searchInputs, type: e.target.value})}
+                        >
+                            <option value="">ไม่ระบุ</option>
+                            <option value="บ้านเดี่ยว">บ้านเดี่ยว</option>
+                            <option value="ทาวน์โฮม">ทาวน์โฮม</option>
+                            <option value="คอนโด">คอนโดมิเนียม</option>
+                            <option value="ที่ดิน">ที่ดิน</option>
+                        </select>
+                        <i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                    </div>
+                </div>
+
+                {/* Dropdown 2 */}
+                <div>
+                    <label className="text-white text-sm font-bold mb-2 block">จังหวัด</label>
+                    <div className="relative">
+                        <select className="w-full h-12 px-4 text-sm rounded-sm bg-white border-none focus:ring-2 focus:ring-primary-gold outline-none text-gray-700 appearance-none cursor-pointer">
+                            <option value="">ทุกจังหวัด</option>
+                            <option value="กรุงเทพมหานคร">กรุงเทพมหานคร</option>
+                            <option value="สมุทรปราการ">สมุทรปราการ</option>
+                            <option value="นนทบุรี">นนทบุรี</option>
+                        </select>
+                        <i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                    </div>
+                </div>
+
+                {/* Dropdown 3 */}
+                <div>
+                    <label className="text-white text-sm font-bold mb-2 block">ช่วงราคา</label>
+                    <div className="relative">
+                         <select 
+                            className="w-full h-12 px-4 text-sm rounded-sm bg-white border-none focus:ring-2 focus:ring-primary-gold outline-none text-gray-700 appearance-none cursor-pointer"
+                            onChange={(e) => setSearchInputs({...searchInputs, price: e.target.value})}
+                        >
+                            <option value="">ไม่จำกัดราคา</option>
+                            <option value="< 2M">น้อยกว่า 2 ล้านบาท</option>
+                            <option value="2M-5M">2 - 5 ล้านบาท</option>
+                            <option value="5M-10M">5 - 10 ล้านบาท</option>
+                            <option value="> 10M">มากกว่า 10 ล้านบาท</option>
+                        </select>
+                        <i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                    </div>
+                </div>
+
+                {/* Search Button (ปุ่มแดง/ทอง) */}
+                <div className="flex items-end">
+                    <button 
+                        onClick={handleSearch} 
+                        className="w-full h-12 bg-gradient-to-r from-[#DA291C] to-[#B01F15] hover:from-primary-gold hover:to-primary-gold-hover text-white font-bold rounded-sm transition shadow-lg flex justify-center items-center cursor-pointer"
+                    >
+                        ค้นหา <i className="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+
             </div>
           </div>
         </div>
