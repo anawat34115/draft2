@@ -40,9 +40,9 @@ export default function Home() {
   // --- 3. Logic: Hero Slider ---
   const [currentSlide, setCurrentSlide] = useState(0);
   const slides = [
-    "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80",
+    "https://www.shutterstock.com/image-photo/woman-architect-drawing-building-plans-600nw-2246694583.jpg",
     "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80",
-    "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80"
+    "https://images.unsplash.com/photo-1505843513577-22bb7d21e455?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   ];
 
   useEffect(() => {
@@ -116,9 +116,9 @@ export default function Home() {
         <div className="absolute inset-0 banner-gradient flex items-center z-10">
           <div className="container mx-auto px-4 md:px-8">
             <div className="max-w-xl pt-10">
-              <div className="text-primary-gold text-6xl md:text-8xl font-script font-bold mb-2 drop-shadow-sm" style={{ fontFamily: 'Brush Script MT, cursive' }}>Be Happy</div>
+              <div className="text-primary-gold text-6xl md:text-8xl font-script font-bold mb-2 drop-shadow-sm" >Happiness</div>
               <h1 className="text-3xl md:text-4xl font-bold text-primary-blue mb-2">THE REALITY ASSET</h1>
-              <p className="text-xl md:text-2xl text-gray-600 font-medium border-l-4 border-primary-gold pl-4">ส่งต่อที่อยู่อาศัยของความสุข</p>
+              <p className="text-xl md:text-2xl text-gray-600 font-medium border-l-4 border-primary-gold pl-4">งานซื้อขาย อสังหาฯวางใจเรา</p>
             </div>
           </div>
         </div>
