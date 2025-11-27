@@ -1,12 +1,40 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Navbar from '../components/Navbar';
+
+// --- IMPORT DATA จากไฟล์ JSON ของคุณ ---
+// ** แก้ไข path ให้ตรงกับตำแหน่งไฟล์ของคุณนะครับ **
+import provincesData from '../app/data/provinces.json';
+import districtsData from '../app/data/districts.json';
+import Logo from '../img/Logo.png';
+import Footer from '../components/Footer';
 
 export default function Home() {
   const router = useRouter();
 
-  // --- 1. ข้อมูลจำลอง (Mock Data) ---
+  // --- 1. Logic: State สำหรับ Dropdown จังหวัด/อำเภอ ---
+  const [selectedProvinceId, setSelectedProvinceId] = useState('');
+  const [selectedDistrictId, setSelectedDistrictId] = useState('');
+
+  // Derived State: กรองอำเภอทันทีเมื่อเลือกจังหวัด (ใช้ useMemo เพื่อประสิทธิภาพ)
+  const currentDistricts = useMemo(() => {
+    if (!selectedProvinceId) return [];
+    
+    // แปลงเป็น Number หรือ String ให้ตรงกันกับข้อมูลใน JSON (กันพลาด)
+    return districtsData.filter(d => Number(d.province_id) === Number(selectedProvinceId));
+  }, [selectedProvinceId]);
+
+  // เช็คว่าเป็น กทม. หรือไม่ (ID=1) เพื่อเปลี่ยนคำว่า อำเภอ <-> เขต
+  const isBangkok = Number(selectedProvinceId) === 1;
+
+  const handleProvinceChange = (e) => {
+    setSelectedProvinceId(e.target.value);
+    setSelectedDistrictId(''); // Reset อำเภอทิ้ง เมื่อเปลี่ยนจังหวัด
+  };
+
+  // --- 2. ข้อมูลจำลอง Properties (Mock Data สำหรับโชว์การ์ด) ---
   const featuredProperties = [
     { id: '52099', type: 'ขาย', category: 'บ้านเดี่ยว', title: 'ขายบ้านเดี่ยว 2 ชั้น หมู่บ้านนันทวัน พระราม 9', location: 'ลาดพร้าว, กรุงเทพฯ', price: '11,900,000', bed: 3, bath: 3, car: 2, img: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b91d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60' },
     { id: '14205', type: 'ขาย', category: 'ทาวน์โฮม', title: 'ขายทาวน์โฮม 3 ชั้น พลีโน่ สุขุมวิท-บางนา', location: 'บางนา, กรุงเทพฯ', price: '3,190,000', bed: 3, bath: 2, car: 1, img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60' },
@@ -21,23 +49,31 @@ export default function Home() {
     { id: '67105', type: 'เช่า', category: 'คอนโด', title: 'ให้เช่า คอนโด ลุมพินี วิลล์ นครอินทร์-ริเวอร์วิว', location: 'นนทบุรี', bed: 1, bath: 1, price: '6,500 /เดือน', img: 'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60' },
   ];
 
-  // --- 2. Logic: Search & State ---
-  const [searchTab, setSearchTab] = useState('sell'); // 'sell' หรือ 'rent'
-  const [searchInputs, setSearchInputs] = useState({ type: '', location: '', price: '' });
-
+  // --- 3. Logic: Search & State ---
+  const [searchTab, setSearchTab] = useState('sell');
+  const [searchInputs, setSearchInputs] = useState({ 
+    keyword: '', 
+    type: '', 
+    price: '' 
+  });
+  
   const handleSearch = () => {
-    // จำลองการค้นหา (ในเว็บจริงจะ Redirect ไปหน้า Search พร้อม Query Param)
-    alert(`🔍 กำลังค้นหา: 
-    - ประเภท: ${searchTab === 'sell' ? 'ซื้อ' : 'เช่า'}
-    - ทรัพย์: ${searchInputs.type || 'ทั้งหมด'}
-    - ทำเล: ${searchInputs.location || 'ทุกทำเล'}
-    - ราคา: ${searchInputs.price || 'ทุกช่วงราคา'}`);
+    // ดึงชื่อจังหวัด/อำเภอมาแสดง (Optional)
+    const provinceName = provincesData.find(p => Number(p.id) === Number(selectedProvinceId))?.name_th || '';
+    const districtName = districtsData.find(d => Number(d.id) === Number(selectedDistrictId))?.name_th || '';
+
+    // สร้าง URL parameters หรือ log ดูค่า
+    console.log({
+      tab: searchTab,
+      ...searchInputs,
+      province: provinceName,
+      district: districtName
+    });
     
-    // ตัวอย่างการ Redirect จริง:
-    // router.push(`/search?tab=${searchTab}&type=${searchInputs.type}`);
+    // router.push(...)
   };
 
-  // --- 3. Logic: Hero Slider ---
+  // --- 4. Logic: Hero Slider ---
   const [currentSlide, setCurrentSlide] = useState(0);
   const slides = [
     "https://www.shutterstock.com/image-photo/woman-architect-drawing-building-plans-600nw-2246694583.jpg",
@@ -52,7 +88,7 @@ export default function Home() {
     return () => clearInterval(slideInterval);
   }, [slides.length]);
 
-  // --- 4. Logic: Horizontal Scroll ---
+  // --- 5. Logic: Horizontal Scroll ---
   const scrollContainerRef = useRef(null);
   const scrollProperties = (direction) => {
     if (scrollContainerRef.current) {
@@ -70,7 +106,6 @@ export default function Home() {
       {/* Top Bar */}
       <div className="bg-primary-blue text-white text-xs py-2 px-4 md:px-8 flex justify-between items-center border-b border-white/10">
         <div className="flex items-center space-x-4">
-          <span className="text-primary-gold">The Reality Asset Plus Agent Co., Ltd.</span>
         </div>
         <div className="flex items-center space-x-4">
           <button className="hover:text-primary-gold cursor-pointer transition"><i className="fas fa-search"></i></button>
@@ -82,58 +117,56 @@ export default function Home() {
       </div>
 
       {/* Navigation */}
-      <nav className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 md:px-8 py-3 flex justify-between items-center">
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="flex flex-col leading-tight">
-              <div className="flex items-center text-primary-blue font-bold text-2xl">
-                <i className="fas fa-city mr-2 text-primary-gold"></i> THE REALITY
-              </div>
-              <span className="text-[10px] text-primary-gold tracking-widest uppercase">Asset Plus Agent Co., Ltd.</span>
-            </div>
-          </Link>
-          <div className="hidden md:flex space-x-6 text-sm font-medium text-gray-700">
-            <Link href="/" className="text-primary-blue font-bold border-b-2 border-primary-gold">หน้าหลัก</Link>
-            <Link href="/buy" className="hover:text-primary-gold transition">ขายที่อยู่อาศัย</Link>
-            <Link href="/rent" className="hover:text-primary-gold transition">เช่าที่อยู่อาศัย</Link>
-            <Link href="/services" className="hover:text-primary-gold transition">บริการของเรา</Link>
-            <Link href="/portfolio" className="hover:text-primary-gold transition">ผลงานของเรา</Link>
-            <Link href="/contact" className="hover:text-primary-gold transition">ติดต่อเรา</Link>
-          </div>
-          <div className="md:hidden text-2xl text-primary-blue">
-            <i className="fas fa-bars"></i>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero Banner */}
       <div className="relative h-[400px] md:h-[500px] bg-gray-100 overflow-hidden">
         {slides.map((src, index) => (
-          <div key={index} className={`absolute w-full h-full transition-opacity duration-1000 ease-in-out ${currentSlide === index ? 'opacity-100' : 'opacity-0'}`}>
-             <img src={src} alt="Banner" className="absolute inset-0 w-full h-full object-cover object-center" />
+          <div
+            key={index}
+            className={`absolute w-full h-full transition-opacity duration-1000 ease-in-out ${
+              currentSlide === index ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            <img
+              src={src}
+              alt="Banner"
+              className="absolute inset-0 w-full h-full object-cover object-center"
+            />
           </div>
         ))}
+
         <div className="absolute inset-0 banner-gradient flex items-center z-10">
-          <div className="container mx-auto px-4 md:px-8">
-            <div className="max-w-xl pt-10">
-              <div className="text-primary-gold text-6xl md:text-8xl font-script font-bold mb-2 drop-shadow-sm" >Happiness</div>
-              <h1 className="text-3xl md:text-4xl font-bold text-primary-blue mb-2">THE REALITY ASSET</h1>
-              <p className="text-xl md:text-2xl text-gray-600 font-medium border-l-4 border-primary-gold pl-4">งานซื้อขาย อสังหาฯวางใจเรา</p>
+          <div className="container mx-auto px-4 md:px-8 flex justify-end">
+            <div className="max-w-xl pt-10 text-right">
+              <div className="text-primary-gold text-6xl md:text-8xl font-script font-bold mb-2 drop-shadow-sm">
+                Happiness
+              </div>
+              <p className="text-xl md:text-2xl text-gray-600 font-medium border-l-4 border-primary-gold pl-4 inline-block">
+                งานซื้อขาย อสังหาฯวางใจเรา
+              </p>
             </div>
           </div>
         </div>
+
         <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
           {slides.map((_, index) => (
-            <button key={index} className={`w-3 h-3 rounded-full transition-colors ${currentSlide === index ? 'bg-primary-gold' : 'bg-gray-300'}`} onClick={() => setCurrentSlide(index)}></button>
+            <button
+              key={index}
+              className={`w-3 h-3 rounded-full transition-colors ${
+                currentSlide === index ? 'bg-primary-gold' : 'bg-gray-300'
+              }`}
+              onClick={() => setCurrentSlide(index)}
+            ></button>
           ))}
         </div>
       </div>
 
-      {/* Search Bar (Interactive) */}
-{/* Search Bar Section */}
-      <div className="relative z-20 -mt-10"> {/* ปรับ margin-top เพื่อดึงขึ้นไปหา Banner */}
+
+      {/* Search Bar Section */}
+      <div className="relative z-20 -mt-10">
         
-        {/* 1. Tabs (อยู่เหนือกล่องค้นหา) */}
+        {/* Tabs */}
         <div className="container mx-auto px-4 md:px-8">
           <div className="flex">
             <button 
@@ -144,37 +177,39 @@ export default function Home() {
             </button>
             <button 
                 onClick={() => setSearchTab('rent')}
-                className={`min-w-[80px] px-6 py-3 text-sm font-bold transition-colors ${searchTab === 'rent' ? 'bg-primary-blue text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+                className={`min-w-[80px] px-6 py-3 text-sm font-bold transition-colors ${searchTab === 'rent' ? 'bg-primary-blue text-white' : 'bg-[#d8aa64] text-white hover:bg-primary-gold-hover'}`}
             >
                 เช่า
             </button>
           </div>
         </div>
 
-        {/* 2. Main Search Box (พื้นหลังสีน้ำเงินเข้ม) */}
+        {/* Main Search Box */}
         <div className="bg-primary-blue py-8 shadow-xl">
           <div className="container mx-auto px-4 md:px-8">
             
-            {/* Row 1: Keyword Input + Filter Buttons */}
+            {/* Row 1: Keyword & Filters */}
             <div className="flex flex-col md:flex-row gap-4 mb-6">
-                {/* ช่องกรอกคำค้นหา */}
                 <div className="flex-grow">
                     <label className="text-white text-sm font-bold mb-2 block">คำค้นหา</label>
                     <input 
                         type="text" 
-                        placeholder="ชื่อโครงการ หรือ ทำเลที่ตั้ง" 
+                        placeholder="ชื่อโครงการ, รหัสทรัพย์, หรือทำเลที่ตั้ง" 
                         className="w-full h-12 px-4 text-sm rounded-sm bg-white border-none focus:ring-2 focus:ring-primary-gold outline-none text-gray-700"
-                        onChange={(e) => setSearchInputs({...searchInputs, location: e.target.value})}
+                        onChange={(e) => setSearchInputs({...searchInputs, keyword: e.target.value})}
                     />
                 </div>
                 
-                {/* ปุ่มตัวกรอง & ล้างข้อมูล (ชิดขวาบน PC) */}
                 <div className="flex items-end gap-2 shrink-0">
                     <button className="h-12 px-4 bg-[#333] hover:bg-black text-white text-sm rounded-sm transition flex items-center">
                         ตัวกรอง
                     </button>
                     <button 
-                        onClick={() => setSearchInputs({ type: '', location: '', price: '' })}
+                        onClick={() => {
+                          setSearchInputs({ keyword: '', type: '', price: '' });
+                          setSelectedProvinceId('');
+                          setSelectedDistrictId('');
+                        }}
                         className="h-12 px-4 bg-gray-300 hover:bg-white text-gray-700 text-sm rounded-sm transition flex items-center"
                     >
                         ล้างข้อมูล
@@ -182,47 +217,78 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* Row 2: Dropdowns + Search Button */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* Dropdown 1 */}
+            {/* Row 2: Dropdowns (5 Columns) */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                
+                {/* 1. Type */}
                 <div>
-                    <label className="text-white text-sm font-bold mb-2 block">ประเภทอสังหาริมทรัพย์</label>
+                    <label className="text-white text-sm font-bold mb-2 block">ประเภท</label>
                     <div className="relative">
-                        <select 
-                            className="w-full h-12 px-4 text-sm rounded-sm bg-white border-none focus:ring-2 focus:ring-primary-gold outline-none text-gray-700 appearance-none cursor-pointer"
-                            onChange={(e) => setSearchInputs({...searchInputs, type: e.target.value})}
-                        >
-                            <option value="">ไม่ระบุ</option>
-                            <option value="บ้านเดี่ยว">บ้านเดี่ยว</option>
-                            <option value="ทาวน์โฮม">ทาวน์โฮม</option>
-                            <option value="คอนโด">คอนโดมิเนียม</option>
-                            <option value="ที่ดิน">ที่ดิน</option>
-                        </select>
-                        <i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                      <select
+                        className="w-full h-12 px-4 text-sm rounded-sm bg-white border-none focus:ring-2 focus:ring-primary-gold outline-none text-gray-700 appearance-none cursor-pointer"
+                        onChange={(e) => setSearchInputs({ ...searchInputs, type: e.target.value })}
+                        value={searchInputs.type}
+                      >
+                        <option value="">ทั้งหมด</option>
+                        <option value="บ้านเดี่ยว">บ้านเดี่ยว</option>
+                        <option value="ทาวน์โฮม">ทาวน์โฮม</option>
+                        <option value="คอนโด">คอนโด</option>
+                        <option value="อาคารพาณิชย์">อาคารพาณิชย์</option>
+                        <option value="ที่ดิน">ที่ดิน</option>
+                      </select>
+                      <i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
                     </div>
                 </div>
 
-                {/* Dropdown 2 */}
+                {/* 2. Province (From Import) */}
                 <div>
                     <label className="text-white text-sm font-bold mb-2 block">จังหวัด</label>
                     <div className="relative">
-                        <select className="w-full h-12 px-4 text-sm rounded-sm bg-white border-none focus:ring-2 focus:ring-primary-gold outline-none text-gray-700 appearance-none cursor-pointer">
+                        <select 
+                          className="w-full h-12 px-4 text-sm rounded-sm bg-white border-none focus:ring-2 focus:ring-primary-gold outline-none text-gray-700 appearance-none cursor-pointer"
+                          value={selectedProvinceId}
+                          onChange={handleProvinceChange}
+                        >
                             <option value="">ทุกจังหวัด</option>
-                            <option value="กรุงเทพมหานคร">กรุงเทพมหานคร</option>
-                            <option value="สมุทรปราการ">สมุทรปราการ</option>
-                            <option value="นนทบุรี">นนทบุรี</option>
+                            {provincesData.map((p) => (
+                              <option key={p.id} value={p.id}>{p.name_th}</option>
+                            ))}
                         </select>
                         <i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
                     </div>
                 </div>
 
-                {/* Dropdown 3 */}
+                {/* 3. District (From Import & Filter) */}
+                <div>
+                    <label className="text-white text-sm font-bold mb-2 block">
+                      {isBangkok ? 'เขต' : 'อำเภอ'}
+                    </label>
+                    <div className="relative">
+                        <select 
+                          className={`w-full h-12 px-4 text-sm rounded-sm border-none focus:ring-2 focus:ring-primary-gold outline-none appearance-none cursor-pointer
+                            ${!selectedProvinceId ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700'}
+                          `}
+                          value={selectedDistrictId}
+                          onChange={(e) => setSelectedDistrictId(e.target.value)}
+                          disabled={!selectedProvinceId}
+                        >
+                            <option value="">{isBangkok ? 'ทุกเขต' : 'ทุกอำเภอ'}</option>
+                            {currentDistricts.map((d) => (
+                              <option key={d.id} value={d.id}>{d.name_th}</option>
+                            ))}
+                        </select>
+                        <i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                    </div>
+                </div>
+
+                {/* 4. Price */}
                 <div>
                     <label className="text-white text-sm font-bold mb-2 block">ช่วงราคา</label>
                     <div className="relative">
-                         <select 
+                          <select 
                             className="w-full h-12 px-4 text-sm rounded-sm bg-white border-none focus:ring-2 focus:ring-primary-gold outline-none text-gray-700 appearance-none cursor-pointer"
                             onChange={(e) => setSearchInputs({...searchInputs, price: e.target.value})}
+                            value={searchInputs.price}
                         >
                             <option value="">ไม่จำกัดราคา</option>
                             <option value="< 2M">น้อยกว่า 2 ล้านบาท</option>
@@ -234,11 +300,11 @@ export default function Home() {
                     </div>
                 </div>
 
-                {/* Search Button (ปุ่มแดง/ทอง) */}
+                {/* 5. Search Button */}
                 <div className="flex items-end">
                     <button 
                         onClick={handleSearch} 
-                        className="w-full h-12 bg-gradient-to-r from-[#DA291C] to-[#B01F15] hover:from-primary-gold hover:to-primary-gold-hover text-white font-bold rounded-sm transition shadow-lg flex justify-center items-center cursor-pointer"
+                        className="w-full h-12 bg-[#c79736] hover:from-primary-gold hover:to-primary-gold-hover text-white font-bold rounded-sm transition shadow-lg flex justify-center items-center cursor-pointer"
                     >
                         ค้นหา <i className="fas fa-arrow-right ml-2"></i>
                     </button>
@@ -251,6 +317,7 @@ export default function Home() {
 
       {/* Featured Properties Slider */}
       <div className="bg-primary-blue py-14 relative overflow-hidden">
+        {/* ... (ส่วนนี้เหมือนเดิมไม่ได้แก้ Logic) ... */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary-gold opacity-10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
         <div className="container mx-auto px-4 md:px-8 relative z-10">
           <h2 className="text-2xl font-bold text-white text-center mb-2">อสังหาริมทรัพย์<span className="text-primary-gold">แนะนำ</span></h2>
@@ -264,37 +331,86 @@ export default function Home() {
               <i className="fas fa-chevron-right"></i>
             </button>
 
-            <div ref={scrollContainerRef} className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory no-scrollbar scroll-smooth">
-               {featuredProperties.map((prop, idx) => (
-                   <Link href={`/property/${prop.id}`} key={idx} className="min-w-[85%] sm:min-w-[calc(50%-12px)] md:min-w-[calc(25%-18px)] flex-shrink-0 snap-start">
-                        <div className="bg-white rounded-lg overflow-hidden shadow-lg relative group border border-gray-100 property-card h-full">
-                            <div className="absolute top-3 right-3 bg-primary-gold text-white text-[10px] font-bold px-3 py-1 rounded shadow-sm z-10 uppercase">{prop.type}</div>
-                            <div className="h-48 overflow-hidden relative">
-                                <img src={prop.img} className="w-full h-full object-cover group-hover:scale-110 transition duration-700" alt={prop.title} />
-                                <div className="absolute bottom-0 left-0 bg-primary-blue/80 text-white text-[10px] px-3 py-1.5 w-full truncate backdrop-blur-sm">
-                                    <i className="fas fa-map-marker-alt mr-1 text-primary-gold"></i> {prop.location}
-                                </div>
-                            </div>
-                            <div className="p-4">
-                                <div className="text-[10px] text-gray-400 font-medium mb-1 flex justify-between">
-                                    <span>รหัส: {prop.id}</span>
-                                    <span className="text-primary-blue font-bold">{prop.category}</span>
-                                </div>
-                                <h3 className="text-sm font-bold text-gray-800 line-clamp-2 mb-3 h-10 group-hover:text-primary-blue transition">{prop.title}</h3>
-                                <div className="flex items-center space-x-3 text-xs text-gray-500 mb-3 border-b border-gray-100 pb-3">
-                                    <span className="flex items-center"><i className="fas fa-bed mr-1 text-primary-gold"></i> {prop.bed}</span>
-                                    <span className="flex items-center"><i className="fas fa-bath mr-1 text-primary-gold"></i> {prop.bath}</span>
-                                    <span className="flex items-center"><i className="fas fa-car mr-1 text-primary-gold"></i> {prop.car}</span>
-                                </div>
-                                <div className="flex justify-between items-center pt-1">
-                                    <span className="text-xs text-gray-400">ราคา</span>
-                                    <span className="text-lg font-bold text-primary-gold">{prop.price}</span>
-                                </div>
-                            </div>
+<div ref={scrollContainerRef} className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory no-scrollbar scroll-smooth">
+    {featuredProperties.map((prop, idx) => (
+        <Link href={`/property/${prop.id}`} key={idx} className="min-w-[85%] sm:min-w-[calc(50%-12px)] md:min-w-[calc(25%-18px)] flex-shrink-0 snap-start">
+            
+            {/* 1. เปลี่ยนจาก group เฉยๆ เป็น group/card */}
+            <div className="group/card relative bg-primary-blue border border-white/5 hover:border-primary-gold/50 transition-all duration-500 rounded-sm overflow-hidden h-full flex flex-col">
+                
+                {/* --- Image Section --- */}
+                <div className="relative h-[350px] overflow-hidden">
+                    {/* 2. เปลี่ยน group-hover เป็น group-hover/card ทั้งหมด */}
+                    <img 
+                        src={prop.img} 
+                        className="w-full h-full object-cover transform transition-transform duration-700 group-hover/card:scale-110" 
+                        alt={prop.title} 
+                    />
+                    
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-primary-blue via-transparent to-transparent opacity-90 group-hover/card:opacity-60 transition-opacity"></div>
+                    
+                    {/* Tag */}
+                    <div className="absolute top-4 left-4 bg-primary-gold text-white text-[10px] px-3 py-1 uppercase tracking-widest z-10 font-bold shadow-md">
+                        {prop.type}
+                    </div>
+
+                    {/* Hover Button Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 bg-black/20 backdrop-blur-[2px]">
+                        <span className="bg-primary-gold px-8 py-3 text-xs uppercase tracking-widest font-bold text-white shadow-xl transform translate-y-4 group-hover/card:translate-y-0 transition-transform duration-500 rounded-sm">
+                            View Details
+                        </span>
+                    </div>
+                </div>
+
+                {/* --- Content Section --- */}
+                <div className="p-8 text-center relative flex flex-col flex-grow justify-between">
+                    
+                    {/* Decorative Line */}
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-1 bg-primary-gold shadow-lg"></div>
+                    
+                    <div>
+                        <h3 className="text-primary-gold font-serif text-2xl mb-1 line-clamp-1">{prop.title}</h3>
+                        <p className="text-gray-400 text-[10px] uppercase tracking-[0.2em] mb-6 line-clamp-1">
+                            {prop.location}
+                        </p>
+
+                        <div className="flex justify-center gap-4 text-sm text-gray-300 font-light mb-6 border-b border-white/10 pb-6">
+                            {prop.bed && (
+                                <span className="flex items-center">
+                                    <i className="fa-solid fa-bed text-primary-gold mr-2"></i> {prop.bed} Bed
+                                </span>
+                            )}
+                            {prop.bath && (
+                                <span className="flex items-center">
+                                    <i className="fa-solid fa-bath text-primary-gold mr-2"></i> {prop.bath} Bath
+                                </span>
+                            )}
+                            {prop.car && (
+                                <span className="flex items-center">
+                                    <i className="fa-solid fa-car text-primary-gold mr-2"></i> {prop.car} Car
+                                </span>
+                            )}
                         </div>
-                   </Link>
-               ))}
+                    </div>
+
+                    <div className="flex justify-between items-end px-2">
+                        <div className="text-left">
+                            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Price</p>
+                            <p className="text-xl text-white font-serif">{prop.price}</p>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-primary-gold text-xs hover:text-white transition cursor-pointer flex items-center gap-1">
+                                View <i className="fa-solid fa-arrow-right text-[10px]"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
             </div>
+        </Link>
+    ))}
+</div>
           </div>
         </div>
       </div>
@@ -305,31 +421,65 @@ export default function Home() {
             <h2 className="text-2xl font-bold text-primary-blue text-center mb-1">อสังหาริมทรัพย์<span className="text-primary-gold">มาใหม่</span></h2>
             <div className="w-16 h-1 bg-primary-gold mx-auto mb-10 rounded-full"></div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                {newProperties.map((prop, idx) => (
-                    <Link href={`/property/${prop.id}`} key={idx}>
-                         <div className="bg-white border border-gray-100 rounded-lg overflow-hidden shadow-sm relative group hover:shadow-xl transition property-card h-full">
-                            <div className="absolute top-3 right-3 bg-white text-primary-blue border border-primary-blue/10 text-[10px] font-bold px-3 py-1 rounded z-10">{prop.type}</div>
-                            <div className="h-48 overflow-hidden relative">
-                                <img src={prop.img} className="w-full h-full object-cover group-hover:scale-110 transition duration-700" alt={prop.title} />
-                            </div>
-                            <div className="p-4">
-                                <div className="text-[10px] text-primary-gold font-bold mb-1">รหัส: {prop.id}</div>
-                                <h3 className="text-sm font-bold text-gray-800 line-clamp-2 mb-2 h-10 group-hover:text-primary-blue transition">{prop.title}</h3>
-                                <div className="flex items-center space-x-3 text-xs text-gray-500 mb-3">
-                                    {prop.bed && <span><i className="fas fa-bed text-primary-gold mr-1"></i> {prop.bed}</span>}
-                                    {prop.bath && <span><i className="fas fa-bath text-primary-gold mr-1"></i> {prop.bath}</span>}
-                                    {prop.area && <span><i className="fas fa-ruler-combined text-primary-gold mr-1"></i> {prop.area}</span>}
-                                </div>
-                                <div className="flex justify-between items-center border-t border-gray-100 pt-3">
-                                    <span className="text-xs text-gray-400">ราคา</span>
-                                    <span className="text-lg font-bold text-primary-blue">{prop.price}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </Link>
-                ))}
+ <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+    {newProperties.map((prop, idx) => (
+        <Link href={`/property/${prop.id}`} key={idx}>
+            {/* ใช้ group/card เพื่อแก้ปัญหา hover ซ้อนกัน */}
+            <div className="group/card h-full bg-primary-blue border border-white/10 hover:border-primary-gold/50 rounded-sm overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-primary-blue/20 transition-all duration-300 relative flex flex-col">
+                
+                {/* --- Image Area --- */}
+                <div className="h-56 overflow-hidden relative">
+                    {/* Badge ประเภท (Top Right) */}
+                    <div className="absolute top-3 right-3 bg-primary-gold text-white text-[10px] font-bold px-3 py-1 uppercase tracking-wider z-10 shadow-md">
+                        {prop.type}
+                    </div>
+                    
+                    {/* Image */}
+                    <img 
+                        src={prop.img} 
+                        className="w-full h-full object-cover transform transition-transform duration-700 group-hover/card:scale-110" 
+                        alt={prop.title} 
+                    />
+                    
+                    {/* Gradient Overlay on Hover */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-primary-blue/90 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300"></div>
+
+                    {/* Button on Hover */}
+                    <div className="absolute bottom-4 left-0 right-0 text-center opacity-0 group-hover/card:opacity-100 transform translate-y-4 group-hover/card:translate-y-0 transition-all duration-300">
+                        <span className="text-primary-gold text-xs font-bold uppercase tracking-widest border-b border-primary-gold pb-1">View Property</span>
+                    </div>
+                </div>
+
+                {/* --- Content Area --- */}
+                <div className="p-5 flex flex-col flex-grow relative">
+                    {/* รหัสทรัพย์ */}
+                    <div className="text-[10px] text-gray-400 mb-2 flex items-center justify-between">
+                        <span>ID: {prop.id}</span>
+                        <div className="w-8 h-[1px] bg-primary-gold/50"></div>
+                    </div>
+
+                    {/* ชื่อโครงการ */}
+                    <h3 className="text-sm font-bold text-white leading-relaxed mb-3 line-clamp-2 group-hover/card:text-primary-gold transition-colors duration-300 min-h-[40px]">
+                        {prop.title}
+                    </h3>
+
+                    {/* Icons */}
+                    <div className="flex items-center space-x-4 text-xs text-gray-300 mb-4 border-b border-white/10 pb-4">
+                        {prop.bed && <span className="flex items-center"><i className="fas fa-bed text-primary-gold mr-2"></i> {prop.bed}</span>}
+                        {prop.bath && <span className="flex items-center"><i className="fas fa-bath text-primary-gold mr-2"></i> {prop.bath}</span>}
+                        {prop.area && <span className="flex items-center"><i className="fas fa-ruler-combined text-primary-gold mr-2"></i> {prop.area}</span>}
+                    </div>
+
+                    {/* Price (Bottom) */}
+                    <div className="mt-auto flex justify-between items-end">
+                        <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Price</span>
+                        <span className="text-xl font-serif text-white group-hover/card:text-primary-gold transition-colors">{prop.price}</span>
+                    </div>
+                </div>
             </div>
+        </Link>
+    ))}
+</div>
             
             <div className="text-center mt-10">
                  <Link href="/search" className="inline-block bg-primary-blue hover:bg-primary-blue/90 text-white text-sm px-10 py-3 rounded shadow-lg transition">
@@ -339,17 +489,19 @@ export default function Home() {
         </div>
     </div>
 
-          {/* Services Section */}
-      <div className="flex flex-col md:flex-row h-auto md:h-[450px] ">
+    {/* Services Section */}
+    <div className="flex flex-col md:flex-row h-auto md:h-[450px] ">
         <div className="w-full md:w-1/2 bg-primary-blue text-white p-8 md:p-16 flex flex-col justify-center relative overflow-hidden">
            <div className="absolute right-0 top-0 w-40 h-full bg-gradient-to-l from-black/20 to-transparent"></div>
            <h4 className="text-sm font-bold tracking-[0.2em] mb-2 uppercase text-primary-gold">Exclusive Services</h4>
            <h2 className="text-3xl font-bold mb-4 leading-tight">บริการครบวงจร<br/>ระดับมืออาชีพ</h2>
            <p className="mb-8 font-light text-gray-300">ปรึกษาเราเพื่อประสบการณ์ซื้อขายที่ดีที่สุด</p>
            <ul className="space-y-4 mb-10 text-sm">
-             <li className="flex items-center"><span className="w-8 h-8 rounded-full bg-primary-gold/20 flex items-center justify-center mr-3 text-primary-gold"><i className="fas fa-tag"></i></span> รับฝากขายบ้านมือสอง</li>
-             <li className="flex items-center"><span className="w-8 h-8 rounded-full bg-primary-gold/20 flex items-center justify-center mr-3 text-primary-gold"><i className="fas fa-comments"></i></span> ให้คำปรึกษาด้านสินเชื่อบ้านฟรี</li>
-             <li className="flex items-center"><span className="w-8 h-8 rounded-full bg-primary-gold/20 flex items-center justify-center mr-3 text-primary-gold"><i className="fas fa-search-dollar"></i></span> การตลาดครอบคลุมทุกช่องทาง</li>
+             <li className="flex items-center"><span className="w-8 h-8 rounded-full bg-primary-gold/20 flex items-center justify-center mr-3 text-primary-gold"><i className="fas fa-tag"></i></span> รับฝากขาย-เช่า อสังหาทุกประเภท</li>
+             <li className="flex items-center"><span className="w-8 h-8 rounded-full bg-primary-gold/20 flex items-center justify-center mr-3 text-primary-gold"><i className="fas fa-comments"></i></span> ให้บริการและคำปรึกษาด้านสินเชื่อ</li>
+             <li className="flex items-center"><span className="w-8 h-8 rounded-full bg-primary-gold/20 flex items-center justify-center mr-3 text-primary-gold"><i className="fas fa-search-dollar"></i></span> รับขายฝาก และ ซื้อ อสังหาทุกประเภท</li>
+              <li className="flex items-center"><span className="w-8 h-8 rounded-full bg-primary-gold/20 flex items-center justify-center mr-3 text-primary-gold"><i className="fas fa-globe-americas"></i></span> การตลาดครอบคลุมทุกช่องทาง</li>
+
            </ul>
            <button className="bg-transparent hover:bg-primary-gold text-primary-gold hover:text-white border border-primary-gold px-8 py-2.5 w-max rounded text-sm transition flex items-center">
              เพิ่มเติม <i className="fas fa-chevron-right ml-2 text-xs"></i>
@@ -359,60 +511,10 @@ export default function Home() {
            <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80" className="absolute inset-0 w-full h-full object-cover transition duration-700 group-hover:scale-105" alt="Service" />
            <div className="absolute inset-0 bg-primary-blue/30 group-hover:bg-transparent transition duration-500"></div>
         </div>
-      </div>
-
-    <div className="container mx-auto px-4 md:px-8 py-16 bg-pr">
-
     </div>
 
-
-
-
-      <div className="bg-primary-blue text-white py-16 relative overflow-hidden ">
-         <div className="absolute inset-0 opacity-5" style={{backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`}}></div>
-        <div className="container mx-auto px-4 md:px-8 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div>
-              <div className="flex flex-col leading-tight mb-6">
-                <div className="flex items-center font-bold text-3xl text-white">
-                  <i className="fas fa-city mr-3 text-primary-gold"></i> THE REALITY
-                </div>
-                <span className="text-xs tracking-[0.2em] text-primary-gold mt-1">ASSET PLUS AGENT CO.,LTD.</span>
-              </div>
-              <p className="text-sm text-gray-400 mb-6 font-light leading-relaxed">
-                ผู้เชี่ยวชาญด้านการ ซื้อ-ขาย อสังหาริมทรัพย์ระดับพรีเมียม<br/>
-                มุ่งมั่นส่งมอบที่อยู่อาศัยที่สมบูรณ์แบบเพื่อคุณ
-              </p>
-            </div>
-            <div>
-              <h4 className="font-bold mb-6 text-lg border-b border-white/10 pb-2 w-max">ติดต่อเรา</h4>
-              <p className="text-sm text-gray-300 mb-3 font-medium">บริษัท เดอะ เรียลลิตี้ แอสเซท พลัส เอเจนท์ จำกัด</p>
-              <p className="text-xs text-gray-400 mb-4 font-light">สำนักงานใหญ่: เลขที่ 45/99 ซอยรามคำแหง 199 แขวงมีนบุรี เขตมีนบุรี กรุงเทพมหานคร</p>
-              <p className="text-lg text-primary-gold mb-6 font-bold"><i className="fas fa-phone-alt mr-2"></i> 02-047-4282</p>
-              <div className="flex space-x-4">
-                <a href="#" className="bg-white/10 hover:bg-primary-gold text-white w-10 h-10 rounded-full flex items-center justify-center transition"><i className="fab fa-facebook-f"></i></a>
-                <a href="#" className="bg-white/10 hover:bg-primary-gold text-white w-10 h-10 rounded-full flex items-center justify-center transition"><i className="fab fa-line"></i></a>
-                <a href="#" className="bg-white/10 hover:bg-primary-gold text-white w-10 h-10 rounded-full flex items-center justify-center transition"><i className="fab fa-instagram"></i></a>
-              </div>
-            </div>
-            <div>
-               <h4 className="font-bold mb-6 text-lg border-b border-white/10 pb-2 w-max">เมนูลัด</h4>
-               <div className="grid grid-cols-2 text-sm text-gray-400 gap-y-3 gap-x-4">
-                 <a href="#" className="hover:text-primary-gold transition flex items-center"><i className="fas fa-caret-right mr-2 text-primary-gold text-xs"></i> หน้าหลัก</a>
-                 <a href="#" className="hover:text-primary-gold transition flex items-center"><i className="fas fa-caret-right mr-2 text-primary-gold text-xs"></i> บริการของเรา</a>
-                 <a href="#" className="hover:text-primary-gold transition flex items-center"><i className="fas fa-caret-right mr-2 text-primary-gold text-xs"></i> ขายอสังหาฯ</a>
-                 <a href="#" className="hover:text-primary-gold transition flex items-center"><i className="fas fa-caret-right mr-2 text-primary-gold text-xs"></i> ติดต่อเรา</a>
-                 <a href="#" className="hover:text-primary-gold transition flex items-center"><i className="fas fa-caret-right mr-2 text-primary-gold text-xs"></i> เช่าอสังหาฯ</a>
-                 <a href="#" className="hover:text-primary-gold transition flex items-center"><i className="fas fa-caret-right mr-2 text-primary-gold text-xs"></i> บทความ</a>
-               </div>
-            </div>
-          </div>
-          <div className="border-t border-white/10 mt-12 pt-6 text-[10px] text-center text-gray-500 flex flex-col md:flex-row justify-between items-center">
-            <span>สงวนลิขสิทธิ์ พ.ศ. 2568 บริษัท เดอะ เรียลลิตี้ แอสเซท พลัส เอเจนท์ จำกัด</span>
-            <span className="mt-2 md:mt-0">Design by The Reality Team</span>
-          </div>
-        </div>
-      </div>
+    {/* Footer */}
+      <Footer />
       
     </main>
   );
