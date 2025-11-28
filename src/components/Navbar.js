@@ -10,7 +10,7 @@ const Navbar = () => {
         <div className="container mx-auto px-4 md:px-8 py-3 flex justify-between items-center">
           <Link href="/" className="flex items-center space-x-2">
             <div className="flex items-center text-primary-blue font-bold text-xl">
-              <Image src={Logo} alt="The Reality Asset Plus Agent Logo" width={70} height={70} className="mr-2" />
+              <Image src={Logo} alt="The Reality Asset Plus Agent Logo" width={120} height={120} className="mr-2" />
               <span>THE REALITY ASSET PLUS</span>
             </div>
           </Link>

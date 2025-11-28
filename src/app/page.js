@@ -121,33 +121,45 @@ export default function Home() {
 
       {/* Hero Banner */}
       <div className="relative h-[400px] md:h-[500px] bg-gray-100 overflow-hidden">
-        {slides.map((src, index) => (
-          <div
-            key={index}
-            className={`absolute w-full h-full transition-opacity duration-1000 ease-in-out ${
-              currentSlide === index ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            <img
-              src={src}
-              alt="Banner"
-              className="absolute inset-0 w-full h-full object-cover object-center"
-            />
-          </div>
-        ))}
+
+
+{/* Hero Banner */}
+      <div className="relative h-[400px] md:h-[500px] bg-gray-100 overflow-hidden">
+        {/* ... (Code ส่วน slide รูปภาพ เหมือนเดิม) ... */}
+        {slides.map((src, index) => ( <div key={index} className={`absolute w-full h-full transition-opacity duration-1000 ease-in-out ${ currentSlide === index ? 'opacity-100' : 'opacity-0' }`} > <img src={src} alt="Banner" className="absolute inset-0 w-full h-full object-cover object-center" /> </div> ))}
+        {/* 1. ใส่ CSS Animation ไว้ตรงนี้ หรือในไฟล์ CSS แยกก็ได้ครับ */}
+        <style>{`
+          @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-150%); } 
+          }
+          .animate-marquee {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 8s linear infinite; /* ปรับความเร็วตรง 8s */
+          }
+        `}</style>
 
         <div className="absolute inset-0 banner-gradient flex items-center z-10">
           <div className="container mx-auto px-4 md:px-8 flex justify-end">
-            <div className="max-w-xl pt-10 text-right">
+            <div className="max-w-xl pt-10 text-right flex flex-col items-end"> 
               <div className="text-primary-gold text-6xl md:text-8xl font-script font-bold mb-2 drop-shadow-sm">
                 Happiness
               </div>
-              <p className="text-xl md:text-2xl text-gray-600 font-medium border-l-4 border-primary-gold pl-4 inline-block">
-                งานซื้อขาย อสังหาฯวางใจเรา
-              </p>
+              
+              {/* 2. ส่วน Mission ที่แก้ไขให้วิ่ง */}
+              <div className="border-l-4 border-primary-gold pl-4 mt-2 overflow-hidden w-[300px] md:w-[400px]"> {/* กำหนดความกว้างกรอบที่จะให้วิ่ง */}
+                <p className="text-xl md:text-2xl text-gray-600 font-medium animate-marquee">
+                  งานซื้อขาย อสังหาฯวางใจเรา
+                </p>
+              </div>
+
             </div>
           </div>
         </div>
+
+        {/* ... (Code ส่วนปุ่มจุดด้านล่าง เหมือนเดิม) ... */}
+      </div>
 
         <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
           {slides.map((_, index) => (

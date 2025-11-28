@@ -12,7 +12,7 @@ const Footer = () => {
           <div>
             <div className="flex flex-col leading-tight mb-6">
               <div className="flex items-center font-bold text-3xl text-white">
-                <Image src={Logo} alt="The Reality Asset Plus Agent Logo" width={70} height={70} className="mr-2" />
+                <h2 className="mr-2">REALITY ASSET PLUS</h2>
               </div>
             </div>
             <p className="text-sm text-gray-400 mb-6 font-light leading-relaxed">
